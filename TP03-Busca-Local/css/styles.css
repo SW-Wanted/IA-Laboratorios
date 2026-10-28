@@ -1,0 +1,108 @@
+
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 15px;
+        line-height: 1.5;
+        color: #222;
+        background: #fff;
+    }
+    header {
+        padding: 24px 20px 18px;
+        border-bottom: 2px solid #333;
+        background: #fff;
+        color: #222;
+    }
+    header .container, main { max-width: 1000px; margin: 0 auto; }
+    h1 { margin: 0 0 4px; font-size: 1.65rem; font-weight: 600; }
+    header p { margin: 0; color: #444; }
+    main { padding: 22px 20px 36px; }
+    .panel {
+        margin-bottom: 24px;
+        padding: 0 0 20px;
+        border: 0;
+        border-bottom: 1px solid #bbb;
+        border-radius: 0;
+        background: #fff;
+        box-shadow: none;
+    }
+    h2 {
+        margin: 0 0 12px;
+        font-size: 1.15rem;
+        font-weight: 600;
+    }
+    h3 { margin: 16px 0 8px; font-size: 1rem; }
+    .problem {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+    }
+    .formula {
+        padding: 8px 0;
+        border-radius: 0;
+        background: #fff;
+        overflow-wrap: anywhere;
+    }
+    .formula strong { display: block; margin-bottom: 4px; }
+    .muted { color: #555; font-size: .92rem; }
+    .controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+        align-items: end;
+    }
+    label { display: block; font-weight: 600; font-size: .92rem; margin-bottom: 5px; }
+    input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #999;
+        border-radius: 2px;
+        font: inherit;
+        background: #fff;
+        color: #222;
+    }
+    button {
+        border: 1px solid #333;
+        border-radius: 2px;
+        padding: 9px 14px;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+        background: #f2f2f2;
+        color: #222;
+    }
+    button:hover { background: #e5e5e5; }
+    button:disabled { opacity: .6; cursor: wait; }
+    .status { margin: 12px 0 0; min-height: 1.4em; color: #444; }
+    .table-wrap { width: 100%; overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; min-width: 620px; }
+    th, td { padding: 8px 10px; border: 1px solid #bbb; text-align: left; }
+    th { background: #f1f1f1; font-size: .9rem; font-weight: 600; }
+    td { font-variant-numeric: tabular-nums; }
+    .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 18px;
+    }
+    .metric { padding: 8px 0; border: 0; border-top: 1px solid #bbb; border-radius: 0; }
+    .metric .name { color: #444; font-size: .9rem; }
+    .metric .value { font-size: 1.25rem; font-weight: 600; margin-top: 4px; }
+    .best { color: #222; }
+    .error { color: #8b0000; }
+    details { margin: 10px 0; }
+    details summary { cursor: pointer; font-weight: 600; }
+    .note { border-left: 3px solid #777; padding: 8px 12px; background: #f7f7f7; }
+    footer {
+        max-width: 1000px;
+        margin: 0 auto;
+        text-align: left;
+        color: #555;
+        padding: 0 20px 24px;
+        font-size: .85rem;
+    }
+    @media (max-width: 560px) {
+        header { padding: 20px 16px 14px; }
+        main { padding: 18px 16px 30px; }
+        .panel { padding-bottom: 16px; }
+    }
