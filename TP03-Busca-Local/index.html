@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TP03 — Buscas Locais e Heurísticas</title>
+    <style>
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 15px;
+        line-height: 1.5;
+        color: #222;
+        background: #fff;
+    }
+    header {
+        padding: 24px 20px 18px;
+        border-bottom: 2px solid #333;
+        background: #fff;
+        color: #222;
+    }
+    header .container, main { max-width: 1000px; margin: 0 auto; }
+    h1 { margin: 0 0 4px; font-size: 1.65rem; font-weight: 600; }
+    header p { margin: 0; color: #444; }
+    main { padding: 22px 20px 36px; }
+    .panel {
+        margin-bottom: 24px;
+        padding: 0 0 20px;
+        border: 0;
+        border-bottom: 1px solid #bbb;
+        border-radius: 0;
+        background: #fff;
+        box-shadow: none;
+    }
+    h2 {
+        margin: 0 0 12px;
+        font-size: 1.15rem;
+        font-weight: 600;
+    }
+    h3 { margin: 16px 0 8px; font-size: 1rem; }
+    .problem {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+    }
+    .formula {
+        padding: 8px 0;
+        border-radius: 0;
+        background: #fff;
+        overflow-wrap: anywhere;
+    }
+    .formula strong { display: block; margin-bottom: 4px; }
+    .muted { color: #555; font-size: .92rem; }
+    .controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+        align-items: end;
+    }
+    label { display: block; font-weight: 600; font-size: .92rem; margin-bottom: 5px; }
+    input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #999;
+        border-radius: 2px;
+        font: inherit;
+        background: #fff;
+        color: #222;
+    }
+    button {
+        border: 1px solid #333;
+        border-radius: 2px;
+        padding: 9px 14px;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+        background: #f2f2f2;
+        color: #222;
+    }
+    button:hover { background: #e5e5e5; }
+    button:disabled { opacity: .6; cursor: wait; }
+    .status { margin: 12px 0 0; min-height: 1.4em; color: #444; }
+    .table-wrap { width: 100%; overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; min-width: 620px; }
+    th, td { padding: 8px 10px; border: 1px solid #bbb; text-align: left; }
+    th { background: #f1f1f1; font-size: .9rem; font-weight: 600; }
+    td { font-variant-numeric: tabular-nums; }
+    .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 18px;
+    }
+    .metric { padding: 8px 0; border: 0; border-top: 1px solid #bbb; border-radius: 0; }
+    .metric .name { color: #444; font-size: .9rem; }
+    .metric .value { font-size: 1.25rem; font-weight: 600; margin-top: 4px; }
+    .best { color: #222; }
+    .error { color: #8b0000; }
+    details { margin: 10px 0; }
+    details summary { cursor: pointer; font-weight: 600; }
+    .note { border-left: 3px solid #777; padding: 8px 12px; background: #f7f7f7; }
+    footer {
+        max-width: 1000px;
+        margin: 0 auto;
+        text-align: left;
+        color: #555;
+        padding: 0 20px 24px;
+        font-size: .85rem;
+    }
+    @media (max-width: 560px) {
+        header { padding: 20px 16px 14px; }
+        main { padding: 18px 16px 30px; }
+        .panel { padding-bottom: 16px; }
+    }
+</style>
+</head>
+<body>
+<header>
+    <div class="container">
+        <h1>Optimização de Smartphones</h1>
+        <p>TP03 — Buscas Locais e Heurísticas | Pesquisa Aleatória e Arrefecimento Simulado</p>
+    </div>
+</header>
+
+<main>
+    <section class="panel">
+        <h2>1. Definição do problema</h2>
+        <div class="problem">
+            <div class="formula">
+                <strong>Função objectivo</strong>
+                P(x₁, x₂, x₃) = 0,4x₁ + 0,5x₂² + 0,1x₃³
+            </div>
+            <div class="formula">
+                <strong>Domínio das variáveis</strong>
+                10 ≤ x₁ ≤ 50<br>
+                1 ≤ x₂ ≤ 10<br>
+                1 ≤ x₃ ≤ 5
+            </div>
+            <div class="formula">
+                <strong>Máximo teórico</strong>
+                (x₁, x₂, x₃) = (50, 10, 5)<br>
+                P = 82,5
+            </div>
+        </div>
+        <p class="muted">
+            As três variáveis são inteiras. A pontuação mais elevada representa a melhor solução.
+            O máximo teórico serve como referência para avaliar os resultados dos algoritmos.
+        </p>
+    </section>
+
+    <section class="panel">
+        <h2>2. Parâmetros da experiência</h2>
+        <div class="controls">
+            <div>
+                <label for="runs">Número de execuções independentes</label>
+                <input id="runs" type="number" min="1" max="1000" step="1" value="30">
+            </div>
+            <div>
+                <label for="iterations">Iterações por execução</label>
+                <input id="iterations" type="number" min="1" max="100000" step="1" value="1000">
+            </div>
+            <div>
+                <label for="temperature">Temperatura inicial (Simulated Annealing)</label>
+                <input id="temperature" type="number" min="0.01" max="100000" step="any" value="10">
+            </div>
+            <div>
+                <label for="cooling">Taxa de arrefecimento (0 a 1)</label>
+                <input id="cooling" type="number" min="0.01" max="0.9999" step="any" value="0.95">
+            </div>
+            <div>
+                <button id="runButton" type="button">Executar comparação</button>
+            </div>
+        </div>
+        <p class="muted">
+            Uma execução é uma experiência completa do algoritmo. As iterações são as tentativas
+            realizadas dentro dessa execução. Por exemplo, 30 execuções com 1 000 iterações significam
+            30 experiências por algoritmo.
+        </p>
+        <p id="status" class="status" role="status"></p>
+    </section>
+
+    <section class="panel" id="summaryPanel" hidden>
+        <h2>3. Resumo dos resultados</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Algoritmo</th>
+                        <th>Melhor pontuação</th>
+                        <th>Média das pontuações</th>
+                        <th>Tempo médio (ms)</th>
+                        <th>Execuções que atingiram 82,5</th>
+                    </tr>
+                </thead>
+                <tbody id="summaryBody"></tbody>
+            </table>
+        </div>
+        <div id="bestCards" class="cards" style="margin-top:16px"></div>
+    </section>
+
+    <section class="panel" id="detailsPanel" hidden>
+        <h2>4. Resultados por execução</h2>
+        <p class="muted">A tabela apresenta a melhor solução encontrada em cada execução de cada algoritmo.</p>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Algoritmo</th>
+                        <th>Execução</th>
+                        <th>x₁</th>
+                        <th>x₂</th>
+                        <th>x₃</th>
+                        <th>Pontuação</th>
+                        <th>Tempo (ms)</th>
+                    </tr>
+                </thead>
+                <tbody id="detailsBody"></tbody>
+            </table>
+        </div>
+        <p style="margin-top:16px">
+            <button id="downloadButton" type="button">Exportar resultados CSV</button>
+        </p>
+    </section>
+
+    <section class="panel">
+        <h2>5. Como funcionam os algoritmos</h2>
+        <details>
+            <summary>Pesquisa Aleatória (Random Search)</summary>
+            <p>
+                Em cada iteração, o algoritmo gera uma solução aleatória dentro dos limites permitidos,
+                calcula a sua pontuação e guarda-a se for melhor do que a melhor solução encontrada até
+                então. Não utiliza a solução anterior para escolher a seguinte.
+            </p>
+        </details>
+        <details style="margin-top:12px">
+            <summary>Arrefecimento Simulado (Simulated Annealing)</summary>
+            <p>
+                O algoritmo começa com uma solução aleatória e gera vizinhos alterando uma das variáveis
+                em uma unidade. Aceita sempre uma solução melhor. Também pode aceitar uma solução pior,
+                com probabilidade exp(Δ/T), em que Δ é a diferença entre as pontuações e T é a temperatura.
+                A temperatura diminui ao longo das iterações, reduzindo gradualmente a probabilidade de
+                aceitar soluções piores.
+            </p>
+        </details>
+        <p class="note" style="margin-top:16px">
+            Nota: este problema tem uma função crescente em todas as variáveis, por isso o máximo é conhecido.
+            Os algoritmos heurísticos não garantem, em geral, encontrar o máximo em todas as execuções.
+        </p>
+    </section>
+</main>
+
+<footer>TP03 — Buscas Locais e Heurísticas</footer>
+
+<script>
+"use strict";
+
+const MAXIMO_TEORICO = 82.5;
+const LIMITES = {
+    x1: { min: 10, max: 50 },
+    x2: { min: 1, max: 10 },
+    x3: { min: 1, max: 5 }
+};
+
+let ultimoResultado = null;
+
+function avaliarSolucao(solucao) {
+    return 0.4 * solucao.x1
+         + 0.5 * Math.pow(solucao.x2, 2)
+         + 0.1 * Math.pow(solucao.x3, 3);
+}
+
+function numeroAleatorioInteiro(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function gerarSolucaoAleatoria() {
+    return {
+        x1: numeroAleatorioInteiro(LIMITES.x1.min, LIMITES.x1.max),
+        x2: numeroAleatorioInteiro(LIMITES.x2.min, LIMITES.x2.max),
+        x3: numeroAleatorioInteiro(LIMITES.x3.min, LIMITES.x3.max)
+    };
+}
+
+function copiarSolucao(solucao) {
+    return { x1: solucao.x1, x2: solucao.x2, x3: solucao.x3 };
+}
+
+function estaDentroDosLimites(solucao) {
+    return Object.keys(LIMITES).every(chave =>
+        Number.isInteger(solucao[chave]) &&
+        solucao[chave] >= LIMITES[chave].min &&
+        solucao[chave] <= LIMITES[chave].max
+    );
+}
+
+// Pesquisa Aleatória: gera e avalia soluções independentes.
+function pesquisaAleatoria(numeroIteracoes) {
+    const inicio = performance.now();
+    let melhorSolucao = null;
+    let melhorPontuacao = -Infinity;
+
+    for (let i = 0; i < numeroIteracoes; i++) {
+        const candidata = gerarSolucaoAleatoria();
+        const pontuacao = avaliarSolucao(candidata);
+
+        if (pontuacao > melhorPontuacao) {
+            melhorSolucao = copiarSolucao(candidata);
+            melhorPontuacao = pontuacao;
+        }
+    }
+
+    return {
+        algoritmo: "Pesquisa Aleatória",
+        solucao: melhorSolucao,
+        pontuacao: melhorPontuacao,
+        tempoMs: performance.now() - inicio
+    };
+}
+
+// Cria um vizinho alterando uma variável em +1 ou -1.
+// Se a alteração sair dos limites, tenta a direcção oposta.
+function gerarVizinho(solucao) {
+    const vizinho = copiarSolucao(solucao);
+    const variaveis = ["x1", "x2", "x3"];
+    const variavel = variaveis[numeroAleatorioInteiro(0, variaveis.length - 1)];
+    const direccaoInicial = Math.random() < 0.5 ? -1 : 1;
+    const limite = LIMITES[variavel];
+
+    let novoValor = vizinho[variavel] + direccaoInicial;
+
+    if (novoValor < limite.min || novoValor > limite.max) {
+        novoValor = vizinho[variavel] - direccaoInicial;
+    }
+
+    vizinho[variavel] = novoValor;
+    return vizinho;
+}
+
+// Arrefecimento Simulado: pode aceitar soluções piores, sobretudo
+// quando a temperatura ainda é elevada.
+function arrefecimentoSimulado(numeroIteracoes, temperaturaInicial, taxaArrefecimento) {
+    const inicio = performance.now();
+
+    let actual = gerarSolucaoAleatoria();
+    let pontuacaoActual = avaliarSolucao(actual);
+
+    let melhorSolucao = copiarSolucao(actual);
+    let melhorPontuacao = pontuacaoActual;
+    let temperatura = temperaturaInicial;
+
+    for (let i = 0; i < numeroIteracoes; i++) {
+        const candidata = gerarVizinho(actual);
+        const pontuacaoCandidata = avaliarSolucao(candidata);
+        const diferenca = pontuacaoCandidata - pontuacaoActual;
+
+        if (diferenca >= 0 || Math.random() < Math.exp(diferenca / temperatura)) {
+            actual = copiarSolucao(candidata);
+            pontuacaoActual = pontuacaoCandidata;
+        }
+
+        if (pontuacaoActual > melhorPontuacao) {
+            melhorSolucao = copiarSolucao(actual);
+            melhorPontuacao = pontuacaoActual;
+        }
+
+        temperatura *= taxaArrefecimento;
+        // Evita temperatura exactamente zero em execuções muito longas.
+        if (temperatura < 1e-12) temperatura = 1e-12;
+    }
+
+    return {
+        algoritmo: "Arrefecimento Simulado",
+        solucao: melhorSolucao,
+        pontuacao: melhorPontuacao,
+        tempoMs: performance.now() - inicio
+    };
+}
+
+function executarExperiencias(numeroExecucoes, numeroIteracoes, temperatura, taxa) {
+    const resultados = {
+        aleatoria: [],
+        simulado: []
+    };
+
+    for (let i = 0; i < numeroExecucoes; i++) {
+        resultados.aleatoria.push(pesquisaAleatoria(numeroIteracoes));
+        resultados.simulado.push(
+            arrefecimentoSimulado(numeroIteracoes, temperatura, taxa)
+        );
+    }
+
+    return resultados;
+}
+
+function estatisticas(resultados) {
+    const pontuacoes = resultados.map(r => r.pontuacao);
+    const tempos = resultados.map(r => r.tempoMs);
+    const melhor = resultados.reduce((a, b) => b.pontuacao > a.pontuacao ? b : a);
+
+    return {
+        melhor,
+        melhorPontuacao: Math.max(...pontuacoes),
+        mediaPontuacao: pontuacoes.reduce((s, v) => s + v, 0) / pontuacoes.length,
+        tempoMedio: tempos.reduce((s, v) => s + v, 0) / tempos.length,
+        maximosAtingidos: resultados.filter(r =>
+            Math.abs(r.pontuacao - MAXIMO_TEORICO) < 1e-9
+        ).length
+    };
+}
+
+function formatarNumero(valor, casas = 2) {
+    return valor.toLocaleString("pt-PT", {
+        minimumFractionDigits: casas,
+        maximumFractionDigits: casas
+    });
+}
+
+function mostrarResultados(resultados) {
+    const resumo = [
+        { nome: "Pesquisa Aleatória", dados: estatisticas(resultados.aleatoria) },
+        { nome: "Arrefecimento Simulado", dados: estatisticas(resultados.simulado) }
+    ];
+
+    document.getElementById("summaryBody").innerHTML = resumo.map(item => `
+        <tr>
+            <td>${item.nome}</td>
+            <td><strong>${formatarNumero(item.dados.melhorPontuacao)}</strong></td>
+            <td>${formatarNumero(item.dados.mediaPontuacao)}</td>
+            <td>${formatarNumero(item.dados.tempoMedio, 4)}</td>
+            <td>${item.dados.maximosAtingidos} / ${resultados.aleatoria.length}</td>
+        </tr>
+    `).join("");
+
+    document.getElementById("bestCards").innerHTML = resumo.map(item => {
+        const s = item.dados.melhor.solucao;
+        return `
+            <div class="metric">
+                <div class="name">Melhor solução — ${item.nome}</div>
+                <div class="value ${item.dados.melhorPontuacao === MAXIMO_TEORICO ? "best" : ""}">
+                    P = ${formatarNumero(item.dados.melhorPontuacao)}
+                </div>
+                <p>x₁ = ${s.x1}, x₂ = ${s.x2}, x₃ = ${s.x3}</p>
+            </div>
+        `;
+    }).join("");
+
+    const linhas = [];
+    resultados.aleatoria.forEach((r, i) => linhas.push({ ...r, execucao: i + 1 }));
+    resultados.simulado.forEach((r, i) => linhas.push({ ...r, execucao: i + 1 }));
+
+    document.getElementById("detailsBody").innerHTML = linhas.map(r => `
+        <tr>
+            <td>${r.algoritmo}</td>
+            <td>${r.execucao}</td>
+            <td>${r.solucao.x1}</td>
+            <td>${r.solucao.x2}</td>
+            <td>${r.solucao.x3}</td>
+            <td>${formatarNumero(r.pontuacao)}</td>
+            <td>${formatarNumero(r.tempoMs, 4)}</td>
+        </tr>
+    `).join("");
+
+    document.getElementById("summaryPanel").hidden = false;
+    document.getElementById("detailsPanel").hidden = false;
+}
+
+function validarParametros() {
+    const runs = Number(document.getElementById("runs").value);
+    const iterations = Number(document.getElementById("iterations").value);
+    const temperature = Number(document.getElementById("temperature").value);
+    const cooling = Number(document.getElementById("cooling").value);
+
+    if (!Number.isInteger(runs) || runs < 1 || runs > 1000) {
+        throw new Error("O número de execuções deve ser um inteiro entre 1 e 1000.");
+    }
+    if (!Number.isInteger(iterations) || iterations < 1 || iterations > 100000) {
+        throw new Error("As iterações devem ser um inteiro entre 1 e 100000.");
+    }
+    if (!Number.isFinite(temperature) || temperature <= 0) {
+        throw new Error("A temperatura inicial deve ser maior do que zero.");
+    }
+    if (!Number.isFinite(cooling) || cooling <= 0 || cooling >= 1) {
+        throw new Error("A taxa de arrefecimento deve ser maior do que zero e menor do que 1.");
+    }
+
+    return { runs, iterations, temperature, cooling };
+}
+
+document.getElementById("runButton").addEventListener("click", () => {
+    const botao = document.getElementById("runButton");
+    const status = document.getElementById("status");
+
+    try {
+        const parametros = validarParametros();
+        botao.disabled = true;
+        status.textContent = "A executar os algoritmos. Aguarda...";
+        status.classList.remove("error");
+
+        // setTimeout permite actualizar a mensagem antes de iniciar o cálculo.
+        setTimeout(() => {
+            try {
+                const resultados = executarExperiencias(
+                    parametros.runs,
+                    parametros.iterations,
+                    parametros.temperature,
+                    parametros.cooling
+                );
+
+                ultimoResultado = resultados;
+                mostrarResultados(resultados);
+                status.textContent =
+                    `Concluído: ${parametros.runs} execuções por algoritmo, ` +
+                    `com ${parametros.iterations} iterações por execução.`;
+            } catch (erro) {
+                status.textContent = erro.message || "Ocorreu um erro durante a execução.";
+                status.classList.add("error");
+            } finally {
+                botao.disabled = false;
+            }
+        }, 20);
+    } catch (erro) {
+        status.textContent = erro.message;
+        status.classList.add("error");
+    }
+});
+
+document.getElementById("downloadButton").addEventListener("click", () => {
+    if (!ultimoResultado) return;
+
+    const linhas = [["Algoritmo", "Execucao", "x1", "x2", "x3", "Pontuacao", "Tempo_ms"]];
+    ultimoResultado.aleatoria.forEach((r, i) => linhas.push([
+        r.algoritmo, i + 1, r.solucao.x1, r.solucao.x2, r.solucao.x3,
+        r.pontuacao, r.tempoMs
+    ]));
+    ultimoResultado.simulado.forEach((r, i) => linhas.push([
+        r.algoritmo, i + 1, r.solucao.x1, r.solucao.x2, r.solucao.x3,
+        r.pontuacao, r.tempoMs
+    ]));
+
+    const csv = "\uFEFF" + linhas.map(linha =>
+        linha.map(valor => `"${String(valor).replaceAll('"', '""')}"`).join(";")
+    ).join("\r\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "resultados_tp03.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+});
+</script>
+</body>
+</html>
